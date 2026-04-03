@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine
 import os
+import plotly.graph_objects as go
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "..", "hypertension_data.db")
@@ -10,7 +11,7 @@ engine = create_engine(f"sqlite:///{DB_PATH}")
 st.set_page_config(page_title="Hypertension Risk Tracker", layout="wide")
 
 st.title("Patient Hypertension Risk Dashboard")
-st.markdown("monitoring longitudinal trends and urgent clinical alerts.")
+st.markdown("Monitoring longitudinal trends and urgent clinical alerts.")
 
 col1, col2, col3 = st.columns(3)
 
@@ -34,6 +35,53 @@ with col2:
 with col3:
     st.metric("Avg. Systolic BP", f"{avg_bp:.1f} mmHg")
 
+st.header("Individual Patient Analysis")
+
+patient_ids = pd.read_sql("SELECT patient_id FROM patients", engine)['patient_id'].tolist()
+selected_id = st.selectbox("Select Patient ID", patient_ids)
+
+if selected_id:
+    history_query = f"Select visit_date, trestbps FROM vitals WHERE patient_id = {selected_id} ORDER BY visit_date"
+    df_patient = pd.read_sql(history_query, engine)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=df_patient['visit_date'],
+        y=df_patient['trestbps'],
+        mode='lines+markers',
+        name='Systolic BP',
+        line=dict(color="#1f77b4", width=3),
+    ))
+
+    # Line at 180 Danger Zone
+    fig.add_trace(go.Scatter(
+        x=df_patient['visit_date'],
+        y=[180] * len(df_patient),
+        mode='lines',
+        name='Crisis Threshold (180)',
+        line=dict(color='red', width=2, dash='dash'),
+    ))
+
+    # Line at 140 Warning Zone
+    fig.add_trace(go.Scatter(
+        x=df_patient['visit_date'],
+        y=[140] * len(df_patient),
+        mode='lines',
+        name='Warning (140)',
+        line=dict(color='orange', width=2, dash='dot'),
+    ))
+    fig.update_layout(
+        title=f"Blood Pressure Trend for Patient {selected_id}",
+        xaxis_title="visit Date",
+        yaxis_title="BP (mmHg)",
+        yaxis=dict(range=[100, 210]),
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader(f"Visit Logs for Patient {selected_id}")
+    st.dataframe(df_patient.sort_values(by="visit_date", ascending=False), use_container_width=True)
 
 st.sidebar.header("System Navigation")
 
