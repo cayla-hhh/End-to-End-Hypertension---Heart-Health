@@ -16,6 +16,7 @@ def load_to_sqlite():
 
     patients_df.to_sql("patients", engine, if_exists='replace', index=False)
     vitals_df.to_sql("vitals", engine, if_exists='replace', index=False)
-    
+    print("upload success!")
+
 if __name__ == "__main__":
     load_to_sqlite()
