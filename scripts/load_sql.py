@@ -5,7 +5,9 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INPUT_PATH = os.path.join(BASE_DIR, '..', 'data', 'processed', 'patient_history.csv')
 
-engine = create_engine("sqlite:///../hypertension_data.db")
+DB_PATH = os.path.join(BASE_DIR, "..", "hypertension_data.db")
+absolute_db_path = os.path.abspath(DB_PATH)
+engine = create_engine(f"sqlite:///{absolute_db_path}")
 
 def load_to_sqlite():
     df = pd.read_csv(INPUT_PATH)

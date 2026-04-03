@@ -6,7 +6,9 @@ import plotly.graph_objects as go
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "..", "hypertension_data.db")
-engine = create_engine(f"sqlite:///{DB_PATH}")
+
+absolute_db_path = os.path.abspath(DB_PATH)
+engine = create_engine(f"sqlite:///{absolute_db_path}")
 
 st.set_page_config(page_title="Hypertension Risk Tracker", layout="wide")
 
@@ -41,7 +43,7 @@ patient_ids = pd.read_sql("SELECT patient_id FROM patients", engine)['patient_id
 selected_id = st.selectbox("Select Patient ID", patient_ids)
 
 if selected_id:
-    history_query = f"Select visit_date, trestbps FROM vitals WHERE patient_id = {selected_id} ORDER BY visit_date"
+    history_query = f"SELECT visit_date, trestbps FROM vitals WHERE patient_id = {selected_id} ORDER BY visit_date"
     df_patient = pd.read_sql(history_query, engine)
 
     fig = go.Figure()
